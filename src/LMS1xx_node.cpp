@@ -82,8 +82,8 @@ int main(int argc, char **argv)
               outputRange.angleResolution, outputRange.startAngle, outputRange.stopAngle);
 
     scan_msg.header.frame_id = frame_id;
-    scan_msg.range_min = 0.01;
-    scan_msg.range_max = 20.0;
+    scan_msg.range_min = 0.5;
+    scan_msg.range_max = 100.0;
     scan_msg.scan_time = 100.0 / cfg.scaningFrequency;
     scan_msg.angle_increment = (double)outputRange.angleResolution / 10000.0 * DEG2RAD;
     scan_msg.angle_min = (double)outputRange.startAngle / 10000.0 * DEG2RAD - M_PI / 2;
