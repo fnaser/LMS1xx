@@ -27,6 +27,10 @@
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
 
+#include <diagnostic_updater/diagnostic_updater.h>
+#include <diagnostic_updater/publisher.h>
+
+
 #define DEG2RAD M_PI/180.0
 
 int main(int argc, char **argv)
@@ -50,6 +54,18 @@ int main(int argc, char **argv)
   n.param<std::string>("host", host, "192.168.1.2");
   n.param<std::string>("frame_id", frame_id, "laser");
 
+
+  // diagnostics
+  double expectedFrequency_=50;
+  diagnostic_updater::Updater diagnostics_;
+  diagnostics_.setHardwareID("none");   // set from device after connection
+  diagnostic_updater::DiagnosedPublisher<sensor_msgs::LaserScan>* diagnosticPub_ = new diagnostic_updater::DiagnosedPublisher<sensor_msgs::LaserScan>(scan_pub, diagnostics_,
+																		      // frequency should be target +- 10%.
+																		      diagnostic_updater::FrequencyStatusParam(&expectedFrequency_, &expectedFrequency_, 0.1, 10),
+																		      diagnostic_updater::TimeStampStatusParam(-1, 1.3 * 1.0/expectedFrequency_));
+  ROS_ASSERT(diagnosticPub_ != NULL);
+
+
   while (ros::ok())
   {
     ROS_INFO_STREAM("Connecting to laser at " << host);
@@ -70,6 +86,7 @@ int main(int argc, char **argv)
     {
       laser.disconnect();
       ROS_WARN("Unable to get laser output range. Retrying.");
+      diagnostics_.broadcast(diagnostic_msgs::DiagnosticStatus::WARN, "Unable to get laser output range");
       ros::Duration(1).sleep();
       continue;
     }
@@ -186,13 +203,14 @@ int main(int argc, char **argv)
 
         ROS_DEBUG("Publishing scan data.");
         scan_pub.publish(scan_msg);
+	diagnosticPub_->publish(scan_msg);
       }
       else
       {
         ROS_ERROR("Laser timed out on delivering scan, attempting to reinitialize.");
         break;
       }
-
+      diagnostics_.update();
       ros::spinOnce();
     }
 
