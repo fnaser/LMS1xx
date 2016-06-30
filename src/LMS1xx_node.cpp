@@ -45,6 +45,7 @@ int main(int argc, char **argv)
   // parameters
   std::string host;
   std::string frame_id;
+  double range_min, range_max;
 
   ros::init(argc, argv, "lms1xx");
   ros::NodeHandle nh;
@@ -53,6 +54,8 @@ int main(int argc, char **argv)
 
   n.param<std::string>("host", host, "192.168.1.2");
   n.param<std::string>("frame_id", frame_id, "laser");
+  n.param<double>("range_min", range_min, 0.5);
+  n.param<double>("range_max", range_max, 30);
 
 
   // diagnostics
@@ -99,8 +102,8 @@ int main(int argc, char **argv)
               outputRange.angleResolution, outputRange.startAngle, outputRange.stopAngle);
 
     scan_msg.header.frame_id = frame_id;
-    scan_msg.range_min = 0.5;
-    scan_msg.range_max = 100.0;
+    scan_msg.range_min = range_min;
+    scan_msg.range_max = range_max;
     scan_msg.scan_time = 100.0 / cfg.scaningFrequency;
     scan_msg.angle_increment = (double)outputRange.angleResolution / 10000.0 * DEG2RAD;
     scan_msg.angle_min = (double)outputRange.startAngle / 10000.0 * DEG2RAD - M_PI / 2;
