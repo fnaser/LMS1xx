@@ -46,7 +46,6 @@ int main(int argc, char **argv)
   std::string host;
   std::string frame_id;
   double range_min, range_max;
-  double angle_min_rad, angle_max_rad;
 
   ros::init(argc, argv, "lms1xx");
   ros::NodeHandle nh;
@@ -57,11 +56,10 @@ int main(int argc, char **argv)
   n.param<std::string>("frame_id", frame_id, "laser");
   n.param<double>("range_min", range_min, 0.5);
   n.param<double>("range_max", range_max, 30);
-  n.param<double>("angle_min_rad", angle_min_rad, -1.5708);
-  n.param<double>("angle_max_rad", angle_max_rad, 1.5708);
+
 
   // diagnostics
-  double expectedFrequency_ = 50;
+  double expectedFrequency_=50;
   diagnostic_updater::Updater diagnostics_;
   diagnostics_.setHardwareID("none");   // set from device after connection
   diagnostic_updater::DiagnosedPublisher<sensor_msgs::LaserScan>* diagnosticPub_ = new diagnostic_updater::DiagnosedPublisher<sensor_msgs::LaserScan>(scan_pub, diagnostics_,
@@ -69,6 +67,7 @@ int main(int argc, char **argv)
 																		      diagnostic_updater::FrequencyStatusParam(&expectedFrequency_, &expectedFrequency_, 0.1, 10),
 																		      diagnostic_updater::TimeStampStatusParam(-1, 1.3 * 1.0/expectedFrequency_));
   ROS_ASSERT(diagnosticPub_ != NULL);
+
 
   while (ros::ok())
   {
@@ -195,19 +194,9 @@ int main(int argc, char **argv)
       ROS_DEBUG("Reading scan data.");
       if (laser.getScanData(&data))
       {
-        double start_angle = scan_msg.angle_min;
-
         for (int i = 0; i < data.dist_len1; i++)
         {
-          
           scan_msg.ranges[i] = data.dist1[i] * 0.001;
-
-          if ((start_angle < angle_min_rad) || (start_angle > angle_max_rad))
-          {
-            scan_msg.ranges[i] = scan_msg.range_max + 1;
-          }
-
-          start_angle += scan_msg.angle_increment;
         }
 
         for (int i = 0; i < data.rssi_len1; i++)
